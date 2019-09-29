@@ -396,18 +396,38 @@ function openDownloadDialog(url, saveName)
     {
         url = URL.createObjectURL(url); // 创建blob地址
     }
-    var aLink = document.createElement('a');
-    aLink.href = url;
-    aLink.target = "_blank";
-    aLink.download = saveName || ''; // HTML5新增的属性，指定保存文件名，可以不要后缀，注意，file:///模式下不会生效
-    var event;
-    if(window.MouseEvent) event = new MouseEvent('click');
-    else
-    {
-        event = document.createEvent('MouseEvents');
-        event.initMouseEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+    if(window.plus){//移动端
+        createDownload();
+        // 创建下载任务
+        function createDownload() {
+            var dtask = plus.downloader.createDownload(url, {
+                filename:"_documents/downloads/"+saveName+'.mp3'
+            }, function(d, status){
+                // 下载完成
+                if(status == 200){
+                    console.log("Download success: " + d.filename);
+                } else {
+                    console.log("Download failed: " + status);
+                }
+            });
+            //dtask.addEventListener("statechanged", onStateChanged, false);
+            dtask.start();
+        }
+    }else{
+        var aLink = document.createElement('a');
+        aLink.href = url;
+        aLink.target = "_blank";
+        aLink.download = saveName || ''; // HTML5新增的属性，指定保存文件名，可以不要后缀，注意，file:///模式下不会生效
+        var event;
+        if(window.MouseEvent) event = new MouseEvent('click');
+        else
+        {
+            event = document.createEvent('MouseEvents');
+            event.initMouseEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+        }
+        aLink.dispatchEvent(event);
     }
-    aLink.dispatchEvent(event);
+
 }
 
 // 获取外链的ajax回调函数
