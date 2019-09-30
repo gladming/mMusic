@@ -1,6 +1,7 @@
 var api='http://47.112.4.147:86/music/api.php';
 let Config={
-    cache:null
+    cacheAudio:null,
+    cachePic:null
 };
 
 //缓存

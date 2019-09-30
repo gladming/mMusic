@@ -95,6 +95,41 @@ function queryGet(table, value) {
 }
 
 /**
+ * 查询出所有数据
+ * @param table 表名
+ * @param callback 回调函数
+ * @returns {*}
+ */
+function queryGetAll(table) {
+    return new Promise((resolve, reject) => {
+        var res = [];
+        openDb().then(db => {
+            const tx = db.transaction(table, 'readwrite');
+            const store = tx.objectStore(table);
+            const req = store.openCursor();
+            req.onsuccess = e => {
+                var cursor = e.target.result;
+                if (cursor) {
+                    res.push(cursor.value);
+                    cursor.continue();
+                } else {
+                    console.log("查询" + table + "表中所有数据成功");
+                    resolve(res);
+                    db.close();
+                }
+            };
+            req.onerror = e => {
+                console.log(table + ':数据读取失败'+e.target.error);
+                resolve(res);
+            };
+        }).catch(error=>{
+            console.log(error);
+            resolve(res);
+        });
+    });
+}
+
+/**
  * 添加表数据
  * @param table 表名
  * @param data 数据
@@ -221,9 +256,15 @@ function transBlobToUrl(blob) {
     var URL = window.URL || window.webkitURL;
 
     // Create and revoke ObjectURL
-    var fileURL = URL.createObjectURL(blob);console.log(fileURL)
+    var fileURL = URL.createObjectURL(blob);
     // Revoking ObjectURL
     //URL.revokeObjectURL(fileURL);
-    Config.cache=fileURL;
+    if(blob.type.indexOf('image')>-1){
+        Config.cachePic=fileURL;
+    }
+    if(blob.type.indexOf('audio')>-1){
+        Config.cacheAudio=fileURL;
+    }
+
     return fileURL;
 }

@@ -168,7 +168,12 @@
     mui.plusReady(function () {
         plus.key.addEventListener('backbutton', function () {
             //进入后台
-
+            mui.plusReady(function() {
+                var main=plus.android.runtimeMainActivity();
+                if(main){
+                    main.moveTaskToBack(false);
+                }
+            })
 
         }, false);
     });

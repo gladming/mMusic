@@ -155,7 +155,7 @@ function ajaxUrl(music, callback)
         },   //success
         error: function(XMLHttpRequest, textStatus, errorThrown) {
             layer.msg('歌曲链接获取失败 - ' + XMLHttpRequest.status);
-            console.error(XMLHttpRequest + textStatus + errorThrown);
+            console.log(XMLHttpRequest + textStatus + errorThrown);
         }   // error 
     }); //ajax
     
@@ -207,7 +207,7 @@ function ajaxPic(music, callback)
         },   //success
         error: function(XMLHttpRequest, textStatus, errorThrown) {
             layer.msg('歌曲封面获取失败 - ' + XMLHttpRequest.status);
-            console.error(XMLHttpRequest + textStatus + errorThrown);
+            console.log(XMLHttpRequest + textStatus + errorThrown);
         }   // error 
     }); //ajax
     
@@ -306,7 +306,7 @@ function ajaxPlayList(lid, id, callback) {
         },   //success
         error: function(XMLHttpRequest, textStatus, errorThrown) {
             layer.msg('歌单读取失败 - ' + XMLHttpRequest.status);
-            console.error(XMLHttpRequest + textStatus + errorThrown);
+            console.log(XMLHttpRequest + textStatus + errorThrown);
             $(".sheet-item[data-no='" + id + "'] .sheet-name").html('<span style="color: #EA8383">读取失败</span>');     // 专辑名字
         }   // error  
     });//ajax
@@ -347,7 +347,7 @@ function ajaxLyric(music, callback) {
         },   //success
         error: function(XMLHttpRequest, textStatus, errorThrown) {
             layer.msg('歌词读取失败 - ' + XMLHttpRequest.status);
-            console.error(XMLHttpRequest + textStatus + errorThrown);
+            console.log(XMLHttpRequest + textStatus + errorThrown);
             callback('', music.lyric_id);    // 回调函数
         }   // error   
     });//ajax
@@ -417,7 +417,7 @@ function ajaxUserList(uid)
         },   //success
         error: function(XMLHttpRequest, textStatus, errorThrown) {
             layer.msg('歌单同步失败 - ' + XMLHttpRequest.status);
-            console.error(XMLHttpRequest + textStatus + errorThrown);
+            console.log(XMLHttpRequest + textStatus + errorThrown);
         }   // error
     });//ajax
     return true;

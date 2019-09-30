@@ -257,9 +257,13 @@ function listClick(no) {
 // 播放正在播放列表中的歌曲
 // 参数：歌曲在列表中的ID
 function playList(id) {
-    if(Config.cache){
-        (window.URL || window.webkitURL).revokeObjectURL(Config.cache);
-        Config.cache=null;
+    if(Config.cacheAudio){
+        (window.URL || window.webkitURL).revokeObjectURL(Config.cacheAudio);
+        Config.cacheAudio=null;
+    }
+    if(Config.cachePic){
+        (window.URL || window.webkitURL).revokeObjectURL(Config.cachePic);
+        Config.cachePic=null;
     }
     // 第一次播放
     if(rem.playlist === undefined) {
@@ -335,7 +339,7 @@ function play(music) {
     }
     
     try {
-        rem.audio[0].pause();
+        rem.audio[0].pause();console.log(music)
         queryGet('cacheList',music.source+'-'+music.id+'-audio').then(function (e) {
             if(e){
                 rem.audio.attr('src', transBlobToUrl(e.blob));
@@ -357,7 +361,14 @@ function play(music) {
     rem.errCount = 0;   // 连续播放失败的歌曲数归零
     music_bar.goto(0);  // 进度条强制归零
     changeCover(music);    // 更新封面展示
-    ajaxLyric(music, lyricCallback);     // ajax加载歌词
+    //歌词加载
+    queryGet('lyricList',music.source+'-'+music.id).then(e=>{
+        if(e){
+            lyricCallback(e.lyric,music.lyric_id);
+        }else{
+            ajaxLyric(music, lyricCallback);     // ajax加载歌词
+        }
+    });
     music_bar.lock(false);  // 取消进度条锁定
 }
 

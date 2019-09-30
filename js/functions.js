@@ -289,7 +289,7 @@ function musicInfo(list, index) {
     }
     
     tempStr += '<br><span class="info-title">操作：</span>' + 
-    '<span class="info-btn" onclick="thisDownload(this)" data-list="' + list + '" data-index="' + index + '">下载</span>' + 
+    '<span class="info-btn" onclick="thisDownload(this);layer.closeAll();" data-list="' + list + '" data-index="' + index + '">下载</span>' +
     '<span style="margin-left: 10px" class="info-btn" onclick="thisShare(this)" data-list="' + list + '" data-index="' + index + '">外链</span>';
     
     layer.open({
@@ -366,6 +366,17 @@ function searchSubmit() {
 
 // 下载正在播放的这首歌
 function thisDownload(obj) {
+    /*var music=Object.assign(musicList[$(obj).data("list")].item[$(obj).data("index")]);
+    queryGet('cacheList',music.source+'-'+music.id+'-audio').then(e=>{
+        if(e){
+            music.url=transBlobToUrl(e.blob);
+            download(music)
+        }else{
+            ajaxUrl(music, download);
+        }
+    }).catch(e=>{
+        ajaxUrl(music, download);
+    });*/
     ajaxUrl(musicList[$(obj).data("list")].item[$(obj).data("index")], download);
 }
 
@@ -397,7 +408,17 @@ function openDownloadDialog(url, saveName)
         url = URL.createObjectURL(url); // 创建blob地址
     }
     if(window.plus){//移动端
-        createDownload();
+        // 判断本地是否存在该文件，存在就就直接使用，否则就下载
+        plus.io.resolveLocalFileSystemURL("_documents/downloads/"+saveName+'.mp3', function (entry) {
+            if(!entry){
+                createDownload();
+            }else{
+                mui.toast("歌曲："+saveName+"已存在");
+            }
+        }, function (e) {
+            console.log("Resolve file URL failed: ");
+            createDownload();
+        });
         // 创建下载任务
         function createDownload() {
             var dtask = plus.downloader.createDownload(url, {
@@ -405,9 +426,9 @@ function openDownloadDialog(url, saveName)
             }, function(d, status){
                 // 下载完成
                 if(status == 200){
-                    console.log("Download success: " + d.filename);
+                    mui.toast("下载成功: " + d.filename);
                 } else {
-                    console.log("Download failed: " + status);
+                    mui.toast(saveName+"下载失败: " + status);
                 }
             });
             //dtask.addEventListener("statechanged", onStateChanged, false);
@@ -453,47 +474,55 @@ function ajaxShare(music) {
 function changeCover(music) {
     var img = music.pic;    // 获取歌曲封面
     var animate = false,imgload = false;
-    
-    if(!img) {  // 封面为空
-        ajaxPic(music, changeCover);    // 获取歌曲封面图
-        img == "err";    // 暂时用无图像占个位...
-    }
-    
-    if(img == "err") {
-        img = "images/player_cover.png";
-    } else {
-        if(mkPlayer.mcoverbg === true && rem.isMobile)      // 移动端封面
-        {    
-            $("#music-cover").load(function(){
-                $("#mobile-blur").css('background-image', 'url("' + img + '")');
-            });
-        } 
-        else if(mkPlayer.coverbg === true && !rem.isMobile)     // PC端封面
-        { 
-            $("#music-cover").load(function(){
-                if(animate) {   // 渐变动画也已完成
-                    $("#blur-img").backgroundBlur(img);    // 替换图像并淡出
-                    $("#blur-img").animate({opacity:"1"}, 2000); // 背景更换特效
-                } else {
-                    imgload = true;     // 告诉下面的函数，图片已准备好
-                }
-                
-            });
-            
-            // 渐变动画
-            $("#blur-img").animate({opacity: "0.2"}, 1000, function(){
-                if(imgload) {   // 如果图片已经加载好了
-                    $("#blur-img").backgroundBlur(img);    // 替换图像并淡出
-                    $("#blur-img").animate({opacity:"1"}, 2000); // 背景更换特效
-                } else {
-                    animate = true;     // 等待图像加载完
-                }
-            });
+    queryGet('cacheList',music.source+'-'+music.id+'-'+music.pic).then(e=>{
+        if(e){
+            img=transBlobToUrl(e.blob);
         }
+        render();
+    });
+    function render() {
+        if(!img) {  // 封面为空
+            ajaxPic(music, changeCover);    // 获取歌曲封面图
+            img == "err";    // 暂时用无图像占个位...
+        }
+
+        if(img == "err") {
+            img = "images/player_cover.png";
+        } else {
+            if(mkPlayer.mcoverbg === true && rem.isMobile)      // 移动端封面
+            {
+                $("#music-cover").load(function(){
+                    $("#mobile-blur").css('background-image', 'url("' + img + '")');
+                });
+            }
+            else if(mkPlayer.coverbg === true && !rem.isMobile)     // PC端封面
+            {
+                $("#music-cover").load(function(){
+                    if(animate) {   // 渐变动画也已完成
+                        $("#blur-img").backgroundBlur(img);    // 替换图像并淡出
+                        $("#blur-img").animate({opacity:"1"}, 2000); // 背景更换特效
+                    } else {
+                        imgload = true;     // 告诉下面的函数，图片已准备好
+                    }
+
+                });
+
+                // 渐变动画
+                $("#blur-img").animate({opacity: "0.2"}, 1000, function(){
+                    if(imgload) {   // 如果图片已经加载好了
+                        $("#blur-img").backgroundBlur(img);    // 替换图像并淡出
+                        $("#blur-img").animate({opacity:"1"}, 2000); // 背景更换特效
+                    } else {
+                        animate = true;     // 等待图像加载完
+                    }
+                });
+            }
+        }
+
+        $("#music-cover").attr("src", img);     // 改变右侧封面
+        $(".sheet-item[data-no='1'] .sheet-cover").attr('src', img);    // 改变正在播放列表的图像
     }
-    
-    $("#music-cover").attr("src", img);     // 改变右侧封面
-    $(".sheet-item[data-no='1'] .sheet-cover").attr('src', img);    // 改变正在播放列表的图像
+
 }
 
 
@@ -523,33 +552,43 @@ function loadList(list) {
     
     rem.mainList.html('');   // 清空列表中原有的元素
     addListhead();      // 向列表中加入列表头
-    
-    if(musicList[list].item.length == 0) {
-        addListbar("nodata");   // 列表中没有数据
-    } else {
-        
-        // 逐项添加数据
-        for(var i=0; i<musicList[list].item.length; i++) {
-            var tmpMusic = musicList[list].item[i];
-            
-            addItem(i + 1, tmpMusic.name, tmpMusic.artist, tmpMusic.album);
-            
-            // 音乐链接均有有效期限制,重新显示列表时清空处理
-            if(list == 1 || list == 2) tmpMusic.url = "";
-        }
-        
-        // 列表加载完成后的处理
-        if(list == 1 || list == 2) {    // 历史记录和正在播放列表允许清空
-            addListbar("clear");    // 清空列表
-        }
-        
-        if(rem.playlist === undefined) {    // 未曾播放过
-            if(mkPlayer.autoplay == true) pause();  // 设置了自动播放，则自动播放
+    if(list===3){//缓存列表
+        queryGetAll('playList').then(e=>{
+            musicList[list].item=e;
+            show();
+        });
+    }else{
+        show();
+    }
+    //显示内容
+    function show() {
+        if(musicList[list].item.length == 0) {
+            addListbar("nodata");   // 列表中没有数据
         } else {
-            refreshList();  // 刷新列表，添加正在播放样式
+
+            // 逐项添加数据
+            for(var i=0; i<musicList[list].item.length; i++) {
+                var tmpMusic = musicList[list].item[i];
+
+                addItem(i + 1, tmpMusic.name, tmpMusic.artist, tmpMusic.album);
+
+                // 音乐链接均有有效期限制,重新显示列表时清空处理
+                if(list == 1 || list == 2) tmpMusic.url = "";
+            }
+
+            // 列表加载完成后的处理
+            if(list == 1 || list == 2) {    // 历史记录和正在播放列表允许清空
+                addListbar("clear");    // 清空列表
+            }
+
+            if(rem.playlist === undefined) {    // 未曾播放过
+                if(mkPlayer.autoplay == true) pause();  // 设置了自动播放，则自动播放
+            } else {
+                refreshList();  // 刷新列表，添加正在播放样式
+            }
+
+            listToTop();    // 播放列表滚动到顶部
         }
-        
-        listToTop();    // 播放列表滚动到顶部
     }
 }
 
@@ -760,7 +799,7 @@ function dataBox(choose) {
 function addHis(music) {
     if(rem.playlist == 2) return true;  // 在播放“播放记录”列表则不作改变
     
-    if(musicList[2].item.length > 300) musicList[2].item.length = 299; // 限定播放历史最多是 300 首
+    if(musicList[2].item.length > 3000) musicList[2].item.length = 2999; // 限定播放历史最多是 3000 首
     
     if(music.id !== undefined && music.id !== '') {
         // 检查历史数据中是否有这首歌，如果有则提至前面
@@ -807,9 +846,17 @@ function initList() {
             if(tmp_item) {
                 musicList[2].item = tmp_item;
             }
-            
-         // 列表不是用户列表，并且信息为空，需要ajax读取列表
-        }else if(!musicList[i].creatorID && (musicList[i].item == undefined || (i>2 && musicList[i].item.length == 0))) {   
+
+        } else if(i == 3) { // 缓存列表
+            // 读取缓存记录
+            queryGetAll('playList').then(e=>{
+                if(e) {
+                    musicList[3].item = e;
+                }
+            });
+
+            // 列表不是用户列表，并且信息为空，需要ajax读取列表
+        }else if(!musicList[i].creatorID && (musicList[i].item == undefined || (i>2 && musicList[i].item.length == 0))) {
             musicList[i].item = [];
             if(musicList[i].id) {   // 列表ID已定义
                 // ajax获取列表信息
